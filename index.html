@@ -1,0 +1,86 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Micro Room</title>
+<script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
+<style>
+body {
+  margin: 0;
+  background: #111;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+#main-row {
+  display: flex;
+  gap: 20px;
+  width: 1400px;
+  margin-top: 20px;
+}
+#game-container {
+  width: 800px;
+}
+#legend-window,
+#inventory-window {
+  width: 240px;
+  min-height: 600px;
+  padding: 12px 14px;
+  color: #ffffff;
+  background: rgba(20, 20, 20, 0.95);
+  border: 1px solid #444;
+  border-radius: 8px;
+  font: 16px monospace;
+  line-height: 1.5;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.25);
+}
+#legend-window .panel-title,
+#inventory-window .panel-title {
+  margin-bottom: 10px;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+.legend-item {
+  margin-bottom: 10px;
+}
+.legend-key {
+  display: inline-block;
+  min-width: 60px;
+  font-weight: bold;
+  color: #ffd966;
+}
+#dialogue-window {
+  width: 1080px;
+  min-height: 100px;
+  margin: 10px 0 20px;
+  padding: 12px 14px;
+  color: #ffffff;
+  background: rgba(20, 20, 20, 0.95);
+  border: 1px solid #444;
+  border-radius: 8px;
+  font: 16px monospace;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.25);
+}
+</style>
+</head>
+<body>
+<div id="main-row">
+  <div id="legend-window">
+    <div class="panel-title">Controls</div>
+    <div class="legend-item"><span class="legend-key">Arrow keys</span> move player</div>
+    <div class="legend-item"><span class="legend-key">H</span> highlight active objects</div>
+    <div class="legend-item"><span class="legend-key">Enter</span> inspect object</div>
+    <div class="legend-item"><span class="legend-key">T</span> take object</div>
+  </div>
+  <div id="game-container"></div>
+  <div id="inventory-window">
+    <div class="panel-title">Inventory</div>
+    <div id="inventory-items"></div>
+  </div>
+</div>
+<div id="dialogue-window"></div>
+<script src="scene.js"></script>
+</body>
+</html>
