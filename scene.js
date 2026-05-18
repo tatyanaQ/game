@@ -119,6 +119,7 @@ class RoomScene extends Phaser.Scene {
       this.dialogue.textContent = this.dialogue.textContent
         ? this.dialogue.textContent + "\n" + fullText
         : fullText;
+      this.dialogue.scrollTop = this.dialogue.scrollHeight;
     }
   }
 }
