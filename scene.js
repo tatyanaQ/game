@@ -16,8 +16,8 @@ class RoomScene extends Phaser.Scene {
     // objects
     this.objects = [];
 
-    this.createObject(300, 200, "Book");
-    this.createObject(600, 350, "Mirror", "**Looks back at you**");
+    this.createObject({ x: 300, y: 200, name: "Book" });
+    this.createObject({ x: 600, y: 350, name: "Mirror", text: "**Looks back at you**", takeable: false });
 
     // dialogue and inventory panels
     this.dialogue = document.getElementById("dialogue-window");
@@ -41,9 +41,10 @@ class RoomScene extends Phaser.Scene {
     this.inventory = [];
   }
 
-  createObject(x, y, name, text) {
+  createObject({ x, y, name, text, takeable = true }) {
     const obj = this.add.rectangle(x, y, 40, 40, 0xff8800);
     obj.name = name;
+    obj.takeable = takeable;
     if (text) obj.interactionText = text;
 
     this.physics.add.existing(obj, true);
@@ -89,7 +90,7 @@ class RoomScene extends Phaser.Scene {
       near.discovered = true;
     }
 
-    if (Phaser.Input.Keyboard.JustDown(this.cursors.t) && near && near.discovered) {
+    if (Phaser.Input.Keyboard.JustDown(this.cursors.t) && near && near.discovered && near.takeable) {
       this.take(near);
     }
   }
