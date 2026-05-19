@@ -15,6 +15,7 @@ const mirrorDialogue = {
       text: "Where can I find an egg?",
       response: "Look in the kitchen. I think there's one in the fridge.",
       requiresItem: "Antihangover recipe",
+      unlocksItem: "Egg",
     },
     {
       text: "See you later.",
@@ -268,6 +269,12 @@ class RoomScene extends Phaser.Scene {
     this.addToDialogue("You", choice.text);
     if (choice.response) {
       this.addToDialogue(this.dialogueSpeaker, choice.response);
+    }
+    if (choice.unlocksItem) {
+      const item = this.objects.find((o) => o.name === choice.unlocksItem);
+      if (item) {
+        item.active = true;
+      }
     }
     if (choice.isFinal === true) {
       this.endDialogue();
