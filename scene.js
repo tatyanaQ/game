@@ -11,6 +11,11 @@ const mirrorOpeningDialogue = {
       response: "I'd like that. We can have some deep conversations about existence.",
     },
     {
+      text: "What do you think of the book I found?",
+      response: "Ah, 'The Last Lighthouse'... A tale of solitude and hope. It resonates with me. Keep it close.",
+      requiresItem: "Book",
+    },
+    {
       text: "See you later.",
       response: "Take care! I'll be here whenever you want to chat.",
       isFinal: true,
@@ -223,8 +228,13 @@ class RoomScene extends Phaser.Scene {
   startDialogue({ speaker, text, options = [] }) {
     this.dialogueActive = true;
     this.dialogueSpeaker = speaker;
-    this.dialogueOptions = options;
+    this.dialogueOptions = options.filter((option) => this.isDialogueOptionVisible(option));
     this.addToDialogue(speaker, text);
+  }
+
+  isDialogueOptionVisible(option) {
+    if (!option.requiresItem) return true;
+    return this.inventory.some((item) => item.name === option.requiresItem);
   }
 
   handleDialogueChoice(index) {
