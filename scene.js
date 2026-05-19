@@ -16,11 +16,11 @@ const mirrorDialogue = {
       response: "Look in the kitchen. I think there's one in the fridge.",
       requiresItems: ["Antihangover recipe"],
       unlocksItems: ["Egg", "Hot sauce"],
+      conflictingItems: ["Egg"],
     },
     {
       text: "See you later.",
       response: "Take care! I'll be here whenever you want to chat.",
-
       isFinal: true,
     },
   ],
@@ -299,7 +299,12 @@ class RoomScene extends Phaser.Scene {
   }
 
   isDialogueOptionVisible(option) {
-    if (!option.requiresItems?.length) return true;
+    if (!option.requiresItems?.length || !option.conflictingItems?.length)
+      return true;
+    const hasConflictingItems = option.conflictingItems.some((itemName) =>
+      this.inventory.some((item) => item.name === itemName),
+    );
+    if (hasConflictingItems) return false;
     return option.requiresItems.every((itemName) =>
       this.inventory.some((item) => item.name === itemName),
     );
