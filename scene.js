@@ -13,6 +13,7 @@ const mirrorOpeningDialogue = {
     {
       text: "See you later.",
       response: "Take care! I'll be here whenever you want to chat.",
+      isFinal: true,
     },
   ],
 };
@@ -233,7 +234,9 @@ class RoomScene extends Phaser.Scene {
     if (choice.response) {
       this.addToDialogue(this.dialogueSpeaker, choice.response);
     }
-    this.endDialogue();
+    if (choice.isFinal === true) {
+      this.endDialogue();
+    }
   }
 
   endDialogue() {
