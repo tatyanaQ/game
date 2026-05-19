@@ -8,12 +8,13 @@ const mirrorDialogue = {
     },
     {
       text: "Do you want to hang out sometime?",
-      response: "I'd like that. We can have some deep conversations about existence.",
+      response:
+        "I'd like that. We can have some deep conversations about existence.",
     },
     {
-      text: "What do you think of the book I found?",
-      response: "Ah, 'The Last Lighthouse'... A tale of solitude and hope. It resonates with me. Keep it close.",
-      requiresItem: "Book",
+      text: "Where can I find an egg?",
+      response: "Look in the kitchen. I think there's one in the fridge.",
+      requiresItem: "Antihangover recipe",
     },
     {
       text: "See you later.",
@@ -44,9 +45,12 @@ class RoomScene extends Phaser.Scene {
     this.createObject({
       x: 300,
       y: 200,
-      name: "Book",
-      description: "A worn leather-bound book titled 'The Last Lighthouse'.",
+      name: "Antihangover recipe",
+      description: ["1 egg", "2 slices of bread", "1 slice of ham"]
+        .map((item) => `- ${item}`)
+        .join("\n"),
       takeable: true,
+      active: true,
     });
     this.createObject({
       x: 600,
@@ -54,6 +58,7 @@ class RoomScene extends Phaser.Scene {
       name: "Mirror",
       text: "**Looks back at you**",
       dialogue: mirrorDialogue,
+      active: true,
     });
 
     // dialogue and inventory panels
@@ -107,6 +112,7 @@ class RoomScene extends Phaser.Scene {
     name,
     text,
     description,
+    active = false,
     takeable = false,
     dialogue = null,
   }) {
@@ -114,6 +120,8 @@ class RoomScene extends Phaser.Scene {
     obj.name = name;
     obj.takeable = takeable;
     obj.description = description;
+    obj.active = active;
+
     if (text) obj.interactionText = text;
     if (dialogue) obj.dialogueData = dialogue;
 
@@ -134,7 +142,9 @@ class RoomScene extends Phaser.Scene {
     if (this.cursors.d.isDown) body.setVelocityX(speed);
     if (this.cursors.h.isDown) {
       for (let obj of this.objects) {
-        obj.fillColor = 0xfff01f;
+        if (obj.active) {
+          obj.fillColor = 0xfff01f;
+        }
       }
     }
 
@@ -148,7 +158,7 @@ class RoomScene extends Phaser.Scene {
         obj.y,
       );
 
-      if (dist < 70) {
+      if (dist < 70 && obj.active) {
         obj.fillColor = 0x00ff00;
         near = obj;
       } else if (this.cursors.h.isUp) {
@@ -184,7 +194,7 @@ class RoomScene extends Phaser.Scene {
     });
     this.updateInventory();
     this.addToDialogue("Inventory", `${obj.name} added.`);
-    this.objects = this.objects.filter((item) => item.name !== obj.name);
+    obj.active = false;
     obj.destroy();
   }
 
@@ -228,7 +238,9 @@ class RoomScene extends Phaser.Scene {
   startDialogue({ speaker, text, options = [] }) {
     this.dialogueActive = true;
     this.dialogueSpeaker = speaker;
-    this.dialogueOptions = options.filter((option) => this.isDialogueOptionVisible(option));
+    this.dialogueOptions = options.filter((option) =>
+      this.isDialogueOptionVisible(option),
+    );
     this.addToDialogue(speaker, text);
   }
 
