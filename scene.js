@@ -24,6 +24,8 @@ const mirrorDialogue = {
   ],
 };
 
+const random = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+
 class RoomScene extends Phaser.Scene {
   constructor() {
     super("room");
@@ -35,16 +37,12 @@ class RoomScene extends Phaser.Scene {
     this.physics.add.existing(this.player);
     this.player.body.setCollideWorldBounds(true);
 
-    // inactive objects
-    this.add.rectangle(200, 250, 40, 40, 0xff8800);
-    this.add.rectangle(450, 150, 40, 40, 0xff8800);
-
     // objects
     this.objects = [];
 
     this.createObject({
-      x: 300,
-      y: 200,
+      x: random(100, 700),
+      y: random(100, 500),
       name: "Antihangover recipe",
       description: ["1 egg", "2 slices of bread", "1 slice of ham"]
         .map((item) => `- ${item}`)
@@ -53,12 +51,26 @@ class RoomScene extends Phaser.Scene {
       active: true,
     });
     this.createObject({
-      x: 600,
-      y: 350,
+      x: random(100, 700),
+      y: random(100, 500),
       name: "Mirror",
       text: "**Looks back at you**",
       dialogue: mirrorDialogue,
       active: true,
+    });
+    this.createObject({
+      x: random(100, 700),
+      y: random(100, 500),
+      name: "Egg",
+      takeable: true,
+      active: false,
+    });
+    this.createObject({
+      x: random(100, 700),
+      y: random(100, 500),
+      name: "Slice of ham",
+      takeable: true,
+      active: false,
     });
 
     // dialogue and inventory panels
@@ -166,7 +178,7 @@ class RoomScene extends Phaser.Scene {
       }
     }
 
-    if (Phaser.Input.Keyboard.JustDown(this.cursors.e) && near) {
+    if (Phaser.Input.Keyboard.JustDown(this.cursors.e) && near && near.active) {
       if (near.dialogueData) {
         this.startDialogue(near.dialogueData);
       } else {
@@ -179,7 +191,8 @@ class RoomScene extends Phaser.Scene {
       Phaser.Input.Keyboard.JustDown(this.cursors.t) &&
       near &&
       near.discovered &&
-      near.takeable
+      near.takeable &&
+      near.active
     ) {
       this.take(near);
     }
