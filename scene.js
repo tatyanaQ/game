@@ -1,3 +1,22 @@
+const mirrorOpeningDialogue = {
+  speaker: "Mirror",
+  text: "**Looks back at you**",
+  options: [
+    {
+      text: "What's up?",
+      response: "Just reflecting on things, as always.",
+    },
+    {
+      text: "Do you want to hang out sometime?",
+      response: "I'd like that. We can have some deep conversations about existence.",
+    },
+    {
+      text: "See you later.",
+      response: "Take care! I'll be here whenever you want to chat.",
+    },
+  ],
+};
+
 class RoomScene extends Phaser.Scene {
   constructor() {
     super("room");
@@ -27,13 +46,29 @@ class RoomScene extends Phaser.Scene {
       x: 600,
       y: 350,
       name: "Mirror",
-      text: "**Looks back at you**"
+      text: "**Looks back at you**",
+      dialogue: mirrorOpeningDialogue,
     });
 
     // dialogue and inventory panels
     this.dialogue = document.getElementById("dialogue-window");
     this.inventoryWindow = document.getElementById("inventory-items");
     this.inventory = [];
+    this.dialogueHistory = [];
+    this.dialogueActive = false;
+    this.dialogueOptions = [];
+    this.dialogueSpeaker = "";
+
+    if (this.dialogue) {
+      this.dialogue.addEventListener("click", (event) => {
+        const optionEl = event.target.closest(".dialogue-option");
+        if (!optionEl) return;
+        const index = Number(optionEl.dataset.index);
+        if (Number.isFinite(index)) {
+          this.handleDialogueChoice(index);
+        }
+      });
+    }
 
     this.addToDialogue("Sir Reginald, the Cat", "Good morning, sunshine!");
     this.updateInventory();
@@ -60,12 +95,21 @@ class RoomScene extends Phaser.Scene {
     });
   }
 
-  createObject({ x, y, name, text, description, takeable = false }) {
+  createObject({
+    x,
+    y,
+    name,
+    text,
+    description,
+    takeable = false,
+    dialogue = null,
+  }) {
     const obj = this.add.rectangle(x, y, 40, 40, 0xff8800);
     obj.name = name;
     obj.takeable = takeable;
     obj.description = description;
     if (text) obj.interactionText = text;
+    if (dialogue) obj.dialogueData = dialogue;
 
     this.physics.add.existing(obj, true);
     this.objects.push(obj);
@@ -76,6 +120,7 @@ class RoomScene extends Phaser.Scene {
     const body = this.player.body;
 
     body.setVelocity(0);
+    if (this.dialogueActive) return;
 
     if (this.cursors.w.isDown) body.setVelocityY(-speed);
     if (this.cursors.s.isDown) body.setVelocityY(speed);
@@ -106,7 +151,11 @@ class RoomScene extends Phaser.Scene {
     }
 
     if (Phaser.Input.Keyboard.JustDown(this.cursors.e) && near) {
-      this.addToDialogue(near.name, near.interactionText);
+      if (near.dialogueData) {
+        this.startDialogue(near.dialogueData);
+      } else {
+        this.addToDialogue(near.name, near.interactionText);
+      }
       near.discovered = true;
     }
 
@@ -164,13 +213,64 @@ class RoomScene extends Phaser.Scene {
   }
 
   addToDialogue(speaker, text) {
-    if (this.dialogue) {
-      const fullText = text ? `${speaker}: ${text}` : speaker;
-      this.dialogue.textContent = this.dialogue.textContent
-        ? this.dialogue.textContent + "\n" + fullText
-        : fullText;
-      this.dialogue.scrollTop = this.dialogue.scrollHeight;
+    if (!this.dialogue) return;
+    const fullText = text ? `${speaker}: ${text}` : speaker;
+    this.dialogueHistory.push(fullText);
+    this.renderDialogue();
+  }
+
+  startDialogue({ speaker, text, options = [] }) {
+    this.dialogueActive = true;
+    this.dialogueSpeaker = speaker;
+    this.dialogueOptions = options;
+    this.addToDialogue(speaker, text);
+  }
+
+  handleDialogueChoice(index) {
+    if (!this.dialogueActive || !this.dialogueOptions[index]) return;
+    const choice = this.dialogueOptions[index];
+    this.addToDialogue("You", choice.text);
+    if (choice.response) {
+      this.addToDialogue(this.dialogueSpeaker, choice.response);
     }
+    this.endDialogue();
+  }
+
+  endDialogue() {
+    this.dialogueActive = false;
+    this.dialogueOptions = [];
+    this.renderDialogue();
+  }
+
+  renderDialogue() {
+    if (!this.dialogue) return;
+
+    const escapeHtml = (value) =>
+      String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+
+    const historyHtml = this.dialogueHistory
+      .map((line) => `<div>${escapeHtml(line)}</div>`)
+      .join("");
+
+    const optionsHtml =
+      this.dialogueActive && this.dialogueOptions.length
+        ? `<div class="dialogue-options" style="margin-top:12px; display:flex; flex-direction:column; gap:8px;">${this.dialogueOptions
+            .map(
+              (option, optionIndex) =>
+                `<button class="dialogue-option" data-index="${optionIndex}" style="padding:8px 10px; border:none; border-radius:6px; background:#333; color:#fff; cursor:pointer; text-align:left;">${escapeHtml(
+                  option.text,
+                )}</button>`,
+            )
+            .join("")}</div>`
+        : "";
+
+    this.dialogue.innerHTML = historyHtml + optionsHtml;
+    this.dialogue.scrollTop = this.dialogue.scrollHeight;
   }
 }
 
