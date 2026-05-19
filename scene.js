@@ -34,8 +34,18 @@ class RoomScene extends Phaser.Scene {
     this.dialogue = document.getElementById("dialogue-window");
     this.inventoryWindow = document.getElementById("inventory-items");
     this.inventory = [];
+
     this.addToDialogue("Sir Reginald, the Cat", "Good morning, sunshine!");
     this.updateInventory();
+
+    this.inventoryWindow.addEventListener("click", (event) => {
+      const item = event.target.closest(".inventory-item");
+      if (!item) return;
+      const index = Number(item.dataset.index);
+      if (Number.isFinite(index)) {
+        this.toggleInventory(index);
+      }
+    });
 
     // input
     this.cursors = this.input.keyboard.addKeys({
@@ -48,8 +58,6 @@ class RoomScene extends Phaser.Scene {
       t: "T",
       esc: Phaser.Input.Keyboard.KeyCodes.ESC,
     });
-
-    this.inventory = [];
   }
 
   createObject({ x, y, name, text, description, takeable = false }) {
@@ -102,17 +110,33 @@ class RoomScene extends Phaser.Scene {
       near.discovered = true;
     }
 
-    if (Phaser.Input.Keyboard.JustDown(this.cursors.t) && near && near.discovered && near.takeable) {
+    if (
+      Phaser.Input.Keyboard.JustDown(this.cursors.t) &&
+      near &&
+      near.discovered &&
+      near.takeable
+    ) {
       this.take(near);
     }
   }
 
   take(obj) {
-    this.inventory.push(obj.name);
+    this.inventory.push({
+      name: obj.name,
+      text: obj.interactionText || "",
+      description: obj.description || "",
+      selected: false,
+    });
     this.updateInventory();
     this.addToDialogue("Inventory", `${obj.name} added.`);
     this.objects = this.objects.filter((item) => item.name !== obj.name);
     obj.destroy();
+  }
+
+  toggleInventory(index) {
+    if (index < 0 || index >= this.inventory.length) return;
+    this.inventory[index].selected = !this.inventory[index].selected;
+    this.updateInventory();
   }
 
   updateInventory() {
@@ -122,8 +146,21 @@ class RoomScene extends Phaser.Scene {
       return;
     }
     this.inventoryWindow.innerHTML = this.inventory
-      .map((item) => `- ${item}`)
-      .join("<br>");
+      .map((item, index) => {
+        const details =
+          item.selected && item.description
+            ? `<div class="inventory-item-details">${item.description}</div>`
+            : "";
+        const icon = item.description ? (item.selected ? "–" : "+") : "";
+        return `<div class="inventory-item" data-index="${index}">
+          <div class="inventory-item-header">
+            <span>${item.name}</span>
+            <span class="toggle-icon">${icon}</span>
+          </div>
+          ${details}
+        </div>`;
+      })
+      .join("");
   }
 
   addToDialogue(speaker, text) {

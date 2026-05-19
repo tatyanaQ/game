@@ -40,6 +40,34 @@ body {
   font-weight: bold;
   text-transform: uppercase;
 }
+.inventory-item {
+  padding: 8px 10px;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  transition: background 0.15s ease, border 0.15s ease;
+}
+.inventory-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+.inventory-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: bold;
+}
+.inventory-item-header .toggle-icon {
+  font-size: 18px;
+  line-height: 1;
+}
+.inventory-item-details {
+  margin-top: 8px;
+  padding: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 5px;
+  font-size: 14px;
+  white-space: pre-wrap;
+}
 .legend-item {
   margin-bottom: 10px;
 }
