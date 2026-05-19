@@ -1,4 +1,4 @@
-const mirrorOpeningDialogue = {
+const mirrorDialogue = {
   speaker: "Mirror",
   text: "**Looks back at you**",
   options: [
@@ -53,7 +53,7 @@ class RoomScene extends Phaser.Scene {
       y: 350,
       name: "Mirror",
       text: "**Looks back at you**",
-      dialogue: mirrorOpeningDialogue,
+      dialogue: mirrorDialogue,
     });
 
     // dialogue and inventory panels
