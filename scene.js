@@ -19,8 +19,98 @@ const mirrorDialogue = {
       conflictingItems: ["Egg"],
     },
     {
+      text: "Cheers!",
+      response: "Now you look like an person. Or at least closer to one.",
+      requiresItems: ["Classic hangover cure"],
+      losesItems: ["Classic hangover cure"],
+    },
+    {
+      text: "Cheers!",
+      response: "Wow, I didn't think you could look even worse.",
+      requiresItems: ["Pickle juice hangover cure"],
+      losesItems: ["Pickle juice hangover cure"],
+    },
+    {
+      text: "Cheers!",
+      response: "Well, at least you're not dead.",
+      requiresItems: ["Hot sauce hangover cure"],
+      losesItems: ["Hot sauce hangover cure"],
+    },
+    {
       text: "See you later.",
       response: "Take care! I'll be here whenever you want to chat.",
+      isFinal: true,
+    },
+  ],
+};
+
+const potDialogue = {
+  speaker: "Pot",
+  options: [
+    {
+      text: "Add egg",
+      requiresItems: ["Egg"],
+      losesItems: ["Egg"],
+    },
+    {
+      text: "Add slice of ham",
+      requiresItems: ["Slice of ham"],
+      losesItems: ["Slice of ham"],
+    },
+    {
+      text: "Add 2 slices of bread",
+      requiresItems: ["Slices of bread"],
+      losesItems: ["Slices of bread"],
+    },
+    {
+      text: "Add hot sauce",
+      requiresItems: ["Hot sauce"],
+      losesItems: ["Hot sauce"],
+    },
+    {
+      text: "Add pickle juice",
+      requiresItems: ["Pickle juice"],
+      losesItems: ["Pickle juice"],
+    },
+    {
+      text: "Cook",
+      response: "This has bubbles... Drink at your own risk!",
+      requiresLostItems: ["Hot sauce"],
+      givesItems: ["Spicy hangover cure"],
+      conflictingItems: [
+        "Spicy hangover cure",
+        "Classic hangover cure",
+        "Pickle juice hangover cure",
+      ],
+      isFinal: true,
+    },
+    {
+      text: "Cook",
+      response: "This has bubbles... Not sure if it's ready, but bottoms up!",
+      requiresLostItems: ["Pickle juice"],
+      givesItems: ["Pickle juice hangover cure"],
+      conflictingItems: [
+        "Spicy hangover cure",
+        "Classic hangover cure",
+        "Pickle juice hangover cure",
+      ],
+      isFinal: true,
+    },
+    {
+      text: "Cook",
+      response: "This has bubbles... Bon appétit!",
+      requiresLostItems: ["Egg", "Slice of ham", "Slices of bread"],
+      conflictingLostItems: ["Hot sauce", "Pickle juice"],
+      givesItems: ["Classic hangover cure"],
+      conflictingItems: [
+        "Spicy hangover cure",
+        "Classic hangover cure",
+        "Pickle juice hangover cure",
+      ],
+      isFinal: true,
+    },
+    {
+      text: "See you later.",
       isFinal: true,
     },
   ],
@@ -51,7 +141,7 @@ class RoomScene extends Phaser.Scene {
         .join("\n"),
       takeable: true,
       active: true,
-      unlocksItems: ["Pickle juice"],
+      unlocksItems: ["Pickle juice", "Pot"],
     });
     this.createObject({
       x: random(100, 700),
@@ -100,13 +190,21 @@ class RoomScene extends Phaser.Scene {
       takeable: true,
       active: true,
     });
+    this.createObject({
+      x: random(100, 700),
+      y: random(100, 500),
+      name: "Pot",
+      dialogue: potDialogue,
+    });
 
     // dialogue and inventory panels
     this.dialogue = document.getElementById("dialogue-window");
     this.inventoryWindow = document.getElementById("inventory-items");
     this.inventory = [];
+    this.lostItems = [];
     this.dialogueHistory = [];
     this.dialogueActive = false;
+    this.allDialogueOptions = [];
     this.dialogueOptions = [];
     this.dialogueSpeaker = "";
 
@@ -121,7 +219,6 @@ class RoomScene extends Phaser.Scene {
       });
     }
 
-    this.addToDialogue("Sir Reginald, the Cat", "Good morning, sunshine!");
     this.updateInventory();
 
     this.inventoryWindow.addEventListener("click", (event) => {
@@ -244,12 +341,21 @@ class RoomScene extends Phaser.Scene {
     });
     this.updateInventory();
     this.addToDialogue("Inventory", `${obj.name} added.`);
-    obj.active = false;
-    obj.destroy();
+    if (obj.active) obj.active = false;
+    if (obj.destroy) obj.destroy();
 
     if (obj.unlocksItems?.length) {
       this.unlockItems(obj.unlocksItems);
     }
+  }
+
+  lose(obj) {
+    const index = this.inventory.findIndex((i) => i.name === obj.name);
+    if (index === -1) return;
+    this.inventory.splice(index, 1);
+    this.updateInventory();
+    this.addToDialogue("Inventory", `${obj.name} removed.`);
+    this.lostItems.push(obj);
   }
 
   toggleInventory(index) {
@@ -292,36 +398,79 @@ class RoomScene extends Phaser.Scene {
   startDialogue({ speaker, text, options = [] }) {
     this.dialogueActive = true;
     this.dialogueSpeaker = speaker;
-    this.dialogueOptions = options.filter((option) =>
+    this.allDialogueOptions = options;
+    this.dialogueOptions = this.allDialogueOptions.filter((option) =>
       this.isDialogueOptionVisible(option),
     );
     this.addToDialogue(speaker, text);
   }
 
+  refreshDialogueOptions() {
+    this.dialogueOptions = this.allDialogueOptions.filter((option) =>
+      this.isDialogueOptionVisible(option),
+    );
+  }
+
   isDialogueOptionVisible(option) {
-    if (!option.requiresItems?.length || !option.conflictingItems?.length)
-      return true;
-    const hasConflictingItems = option.conflictingItems.some((itemName) =>
-      this.inventory.some((item) => item.name === itemName),
-    );
-    if (hasConflictingItems) return false;
-    return option.requiresItems.every((itemName) =>
-      this.inventory.some((item) => item.name === itemName),
-    );
+    if (option.requiresItems?.length) {
+      const hasRequiredItems = option.requiresItems.every((itemName) =>
+        this.inventory.some((item) => item.name === itemName),
+      );
+      if (!hasRequiredItems) return false;
+    }
+
+    if (option.conflictingItems?.length) {
+      const hasConflictingItems = option.conflictingItems.some((itemName) =>
+        this.inventory.some((item) => item.name === itemName),
+      );
+      if (hasConflictingItems) return false;
+    }
+
+    if (option.requiresLostItems?.length) {
+      const hasRequiredLostItems = option.requiresLostItems.every((itemName) =>
+        this.lostItems.some((item) => item.name === itemName),
+      );
+      if (!hasRequiredLostItems) return false;
+    }
+
+    if (option.conflictingLostItems?.length) {
+      const hasConflictingLostItems = option.conflictingLostItems.some(
+        (itemName) => this.lostItems.some((item) => item.name === itemName),
+      );
+      if (hasConflictingLostItems) return false;
+    }
+
+    return true;
   }
 
   handleDialogueChoice(index) {
     if (!this.dialogueActive || !this.dialogueOptions[index]) return;
     const choice = this.dialogueOptions[index];
     this.addToDialogue("You", choice.text);
+    if (choice.losesItems?.length) {
+      choice.losesItems.forEach((itemName) => {
+        const item = this.inventory.find((i) => i.name === itemName);
+        if (item) {
+          this.lose(item);
+        }
+      });
+    }
     if (choice.response) {
       this.addToDialogue(this.dialogueSpeaker, choice.response);
     }
     if (choice.unlocksItems?.length) {
       this.unlockItems(choice.unlocksItems);
     }
+    if (choice.givesItems?.length) {
+      choice.givesItems.forEach((item) => {
+        this.take({ name: item });
+      });
+    }
     if (choice.isFinal === true) {
       this.endDialogue();
+    } else {
+      this.refreshDialogueOptions();
+      this.renderDialogue();
     }
   }
 
