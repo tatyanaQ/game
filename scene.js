@@ -20,7 +20,7 @@ const mirrorDialogue = {
     {
       text: "See you later.",
       response: "Take care! I'll be here whenever you want to chat.",
-      unlocksItems: ["Slices of bread"],
+
       isFinal: true,
     },
   ],
@@ -51,6 +51,7 @@ class RoomScene extends Phaser.Scene {
         .join("\n"),
       takeable: true,
       active: true,
+      unlocksItems: ["Pickle juice"],
     });
     this.createObject({
       x: random(100, 700),
@@ -83,11 +84,19 @@ class RoomScene extends Phaser.Scene {
       y: random(100, 500),
       name: "Hot sauce",
       takeable: true,
+      unlocksItems: ["Slice of ham"],
     });
     this.createObject({
       x: random(100, 700),
       y: random(100, 500),
       name: "Pickle juice",
+      takeable: true,
+    });
+    this.createObject({
+      x: random(100, 700),
+      y: random(100, 500),
+      name: "Sparkling water",
+      unlocksItems: ["Slices of bread"],
       takeable: true,
       active: true,
     });
@@ -146,6 +155,7 @@ class RoomScene extends Phaser.Scene {
     active = false,
     takeable = false,
     dialogue = null,
+    unlocksItems = [],
   }) {
     const obj = this.add.rectangle(x, y, 40, 40, 0xff8800);
     obj.name = name;
@@ -155,6 +165,7 @@ class RoomScene extends Phaser.Scene {
 
     if (text) obj.interactionText = text;
     if (dialogue) obj.dialogueData = dialogue;
+    if (unlocksItems.length) obj.unlocksItems = unlocksItems;
 
     this.physics.add.existing(obj, true);
     this.objects.push(obj);
@@ -217,6 +228,13 @@ class RoomScene extends Phaser.Scene {
     }
   }
 
+  unlockItems(itemNames) {
+    const items = this.objects.filter((o) => itemNames.includes(o.name));
+    items.forEach((item) => {
+      item.active = true;
+    });
+  }
+
   take(obj) {
     this.inventory.push({
       name: obj.name,
@@ -228,6 +246,10 @@ class RoomScene extends Phaser.Scene {
     this.addToDialogue("Inventory", `${obj.name} added.`);
     obj.active = false;
     obj.destroy();
+
+    if (obj.unlocksItems?.length) {
+      this.unlockItems(obj.unlocksItems);
+    }
   }
 
   toggleInventory(index) {
@@ -291,12 +313,7 @@ class RoomScene extends Phaser.Scene {
       this.addToDialogue(this.dialogueSpeaker, choice.response);
     }
     if (choice.unlocksItems?.length) {
-      const items = this.objects.filter((o) =>
-        choice.unlocksItems.includes(o.name),
-      );
-      items.forEach((item) => {
-        item.active = true;
-      });
+      this.unlockItems(choice.unlocksItems);
     }
     if (choice.isFinal === true) {
       this.endDialogue();
