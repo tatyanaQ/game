@@ -16,8 +16,19 @@ class RoomScene extends Phaser.Scene {
     // objects
     this.objects = [];
 
-    this.createObject({ x: 300, y: 200, name: "Book" });
-    this.createObject({ x: 600, y: 350, name: "Mirror", text: "**Looks back at you**", takeable: false });
+    this.createObject({
+      x: 300,
+      y: 200,
+      name: "Book",
+      description: "A worn leather-bound book titled 'The Last Lighthouse'.",
+      takeable: true,
+    });
+    this.createObject({
+      x: 600,
+      y: 350,
+      name: "Mirror",
+      text: "**Looks back at you**"
+    });
 
     // dialogue and inventory panels
     this.dialogue = document.getElementById("dialogue-window");
@@ -41,10 +52,11 @@ class RoomScene extends Phaser.Scene {
     this.inventory = [];
   }
 
-  createObject({ x, y, name, text, takeable = true }) {
+  createObject({ x, y, name, text, description, takeable = false }) {
     const obj = this.add.rectangle(x, y, 40, 40, 0xff8800);
     obj.name = name;
     obj.takeable = takeable;
+    obj.description = description;
     if (text) obj.interactionText = text;
 
     this.physics.add.existing(obj, true);
