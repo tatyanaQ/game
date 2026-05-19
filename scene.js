@@ -14,12 +14,13 @@ const mirrorDialogue = {
     {
       text: "Where can I find an egg?",
       response: "Look in the kitchen. I think there's one in the fridge.",
-      requiresItem: "Antihangover recipe",
-      unlocksItem: "Egg",
+      requiresItems: ["Antihangover recipe"],
+      unlocksItems: ["Egg", "Hot sauce"],
     },
     {
       text: "See you later.",
       response: "Take care! I'll be here whenever you want to chat.",
+      unlocksItems: ["Slices of bread"],
       isFinal: true,
     },
   ],
@@ -64,14 +65,31 @@ class RoomScene extends Phaser.Scene {
       y: random(100, 500),
       name: "Egg",
       takeable: true,
-      active: false,
     });
     this.createObject({
       x: random(100, 700),
       y: random(100, 500),
       name: "Slice of ham",
       takeable: true,
-      active: false,
+    });
+    this.createObject({
+      x: random(100, 700),
+      y: random(100, 500),
+      name: "Slices of bread",
+      takeable: true,
+    });
+    this.createObject({
+      x: random(100, 700),
+      y: random(100, 500),
+      name: "Hot sauce",
+      takeable: true,
+    });
+    this.createObject({
+      x: random(100, 700),
+      y: random(100, 500),
+      name: "Pickle juice",
+      takeable: true,
+      active: true,
     });
 
     // dialogue and inventory panels
@@ -259,8 +277,10 @@ class RoomScene extends Phaser.Scene {
   }
 
   isDialogueOptionVisible(option) {
-    if (!option.requiresItem) return true;
-    return this.inventory.some((item) => item.name === option.requiresItem);
+    if (!option.requiresItems?.length) return true;
+    return option.requiresItems.every((itemName) =>
+      this.inventory.some((item) => item.name === itemName),
+    );
   }
 
   handleDialogueChoice(index) {
@@ -270,11 +290,13 @@ class RoomScene extends Phaser.Scene {
     if (choice.response) {
       this.addToDialogue(this.dialogueSpeaker, choice.response);
     }
-    if (choice.unlocksItem) {
-      const item = this.objects.find((o) => o.name === choice.unlocksItem);
-      if (item) {
+    if (choice.unlocksItems?.length) {
+      const items = this.objects.filter((o) =>
+        choice.unlocksItems.includes(o.name),
+      );
+      items.forEach((item) => {
         item.active = true;
-      }
+      });
     }
     if (choice.isFinal === true) {
       this.endDialogue();
